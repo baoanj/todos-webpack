@@ -3,24 +3,30 @@
     <router-link class="router-link" to="/">Back to Home</router-link>
     <p>name: {{ $route.params.name }}; phone: {{ $route.params.phone }}</p>
     <el-form
-      :model="ruleForm2"
-      status-icon :rules="rules2"
-      ref="ruleForm2"
+      :model="ruleForm"
+      status-icon
+      :rules="rules"
+      ref="ruleForm"
       label-width="100px"
-      class="demo-ruleForm"
     >
       <el-form-item label="密码" prop="pass">
-        <el-input type="password" v-model="ruleForm2.pass" auto-complete="off"></el-input>
+        <el-input type="password" v-model="ruleForm.pass" auto-complete="off"></el-input>
       </el-form-item>
       <el-form-item label="确认密码" prop="checkPass">
-        <el-input type="password" v-model="ruleForm2.checkPass" auto-complete="off"></el-input>
+        <el-input type="password" v-model="ruleForm.checkPass" auto-complete="off"></el-input>
       </el-form-item>
       <el-form-item label="年龄" prop="age">
-        <el-input v-model.number="ruleForm2.age"></el-input>
+        <el-input v-model.number="ruleForm.age"></el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="submitForm('ruleForm2')">提交</el-button>
-        <el-button @click="resetForm('ruleForm2')">重置</el-button>
+        <el-radio-group v-model="ruleForm.role">
+          <el-radio label="student">学生</el-radio>
+          <el-radio label="teacher">老师</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="submitForm('ruleForm')">提交</el-button>
+        <el-button @click="resetForm('ruleForm')">重置</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -34,24 +40,25 @@ export default {
   data() {
     const checkAge = (rule, value, callback) => {
       if (!value) {
-        return callback(new Error('年龄不能为空'));
+        callback(new Error('年龄不能为空'));
+      } else {
+        setTimeout(() => {
+          if (!Number.isInteger(value)) {
+            callback(new Error('请输入数字值'));
+          } else if (value < 18) {
+            callback(new Error('必须年满18岁'));
+          } else {
+            callback();
+          }
+        }, 10);
       }
-      setTimeout(() => {
-        if (!Number.isInteger(value)) {
-          callback(new Error('请输入数字值'));
-        } else if (value < 18) {
-          callback(new Error('必须年满18岁'));
-        } else {
-          callback();
-        }
-      }, 1000);
     };
     const validatePass = (rule, value, callback) => {
       if (value === '') {
         callback(new Error('请输入密码'));
       } else {
-        if (this.ruleForm2.checkPass !== '') {
-          this.$refs.ruleForm2.validateField('checkPass');
+        if (this.ruleForm.checkPass !== '') {
+          this.$refs.ruleForm.validateField('checkPass');
         }
         callback();
       }
@@ -59,19 +66,20 @@ export default {
     const validatePass2 = (rule, value, callback) => {
       if (value === '') {
         callback(new Error('请再次输入密码'));
-      } else if (value !== this.ruleForm2.pass) {
+      } else if (value !== this.ruleForm.pass) {
         callback(new Error('两次输入密码不一致!'));
       } else {
         callback();
       }
     };
     return {
-      ruleForm2: {
+      ruleForm: {
         pass: '',
         checkPass: '',
         age: '',
+        role: 'student',
       },
-      rules2: {
+      rules: {
         pass: [
           { validator: validatePass, trigger: 'blur' },
         ],
@@ -89,12 +97,12 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           postMsg({
-            age: this.ruleForm2.age,
-            pass: this.ruleForm2.pass,
+            age: this.ruleForm.age,
+            pass: this.ruleForm.pass,
+            role: this.ruleForm.role,
           });
         } else {
-          console.log('error submit!!');
-          return false;
+          this.$message.error('提交失败');
         }
       });
     },
